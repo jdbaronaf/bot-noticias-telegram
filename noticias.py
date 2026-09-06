@@ -10,16 +10,14 @@ import asyncio
 import urllib.parse
 import re
 import html
-import openpyxl
-import os
+from datetime import datetime
 
 # Configuración de Telegram
 TOKEN = "8668968223:AAEBbMlX5M4blE9qU-Ln1IJpTVl5ubTdV8A"
 CHANNEL_ID = "-1004298458383"
-EXCEL_FILENAME = "noticias_registro.xlsx"
 
 # Cantidad exacta de noticias NUEVAS que quieres obtener por categoría en cada ejecución
-NOTICIAS_POR_CATEGORIA = 2
+NOTICIAS_POR_CATEGORIA = 15
 
 def init_db():
     conn = sqlite3.connect("noticias_enviadas.db")
@@ -51,23 +49,9 @@ def limpiar_texto(texto):
     sin_tags = re.sub('<[^<]+?>', '', texto)
     return html.unescape(sin_tags).strip()
 
-def guardar_en_excel(titulo, categoria, descripcion, link):
-    if not os.path.exists(EXCEL_FILENAME):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Noticias del Día"
-        ws.append(["Título de la Noticia", "Categoría", "Texto de la Noticia Completa", "Link de la Noticia"])
-        wb.save(EXCEL_FILENAME)
-    
-    wb = openpyxl.load_workbook(EXCEL_FILENAME)
-    ws = wb.active
-    ws.append([titulo, categoria, descripcion, link])
-    wb.save(EXCEL_FILENAME)
-
 def obtener_noticias_google(query):
     query_completa = f"{query} when:1d"
     query_encoded = urllib.parse.quote(query_completa)
-    # Pedimos un stock más amplio (50) para asegurar que tengamos de dónde filtrar las nuevas
     url_rss = f"https://news.google.com/rss/search?q={query_encoded}&hl=es-419&gl=CO&ceid=CO:es-419"
     
     headers = {
@@ -87,11 +71,20 @@ def obtener_noticias_google(query):
             link = entry.get('link', '')
             descripcion = limpiar_texto(entry.get('summary', 'Sin descripción disponible.'))
             
+            # Extraer y formatear la fecha de publicación del RSS si está disponible
+            published_parsed = entry.get('published_parsed')
+            if published_parsed:
+                dt = datetime(*published_parsed[:6])
+                fecha_formateada = dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                fecha_formateada = "Fecha no disponible"
+            
             if link:
                 noticias.append({
                     "titulo": titulo,
                     "link": link,
-                    "descripcion": descripcion
+                    "descripcion": descripcion,
+                    "fecha": fecha_formateada
                 })
         return noticias
     except Exception as e:
@@ -102,7 +95,7 @@ async def enviar_noticias():
     bot = Bot(token=TOKEN)
     init_db()
     
-    categorias = ["Tecnología", "Colombia"]
+    categorias = ["Tecnología", "Colombia", "Cali", "Deportes", "Economía", "Entretenimiento"]
     enviadas_en_esta_sesion = 0
     
     for categoria in categorias:
@@ -112,18 +105,17 @@ async def enviar_noticias():
         print(f"Revisando categoría '{categoria}'...")
         
         for noticia in todas_las_noticias:
-            # Si ya completamos la meta de noticias nuevas para esta categoría, paramos y pasamos a la siguiente
             if nuevas_de_esta_categoria >= NOTICIAS_POR_CATEGORIA:
                 break
                 
-            # Si la noticia YA fue enviada antes, la salta y NO frena el contador
             if noticia_fue_enviada(noticia["link"]):
                 continue
             
-            # Si es verdaderamente nueva, la procesamos
+            # Mensaje incluyendo la fecha y hora de publicación
             mensaje = (
                 f"📰 <b>{noticia['titulo']}</b>\n\n"
-                f"📂 <b>Categoría:</b> {categoria}\n\n"
+                f"📂 <b>Categoría:</b> {categoria}\n"
+                f"⏱ <b>Publicado:</b> {noticia['fecha']}\n\n"
                 f"📝 {noticia['descripcion']}\n\n"
                 f"🔗 <a href='{noticia['link']}'>Leer noticia completa</a>"
             )
@@ -138,13 +130,6 @@ async def enviar_noticias():
                         disable_web_page_preview=False
                     )
                     registrar_noticia(noticia["link"])
-                    
-                    guardar_en_excel(
-                        noticia["titulo"],
-                        categoria,
-                        noticia["descripcion"],
-                        noticia["link"]
-                    )
                     
                     enviadas_en_esta_sesion += 1
                     nuevas_de_esta_categoria += 1
@@ -163,7 +148,7 @@ async def enviar_noticias():
                     
         print(f"-> Se agregaron {nuevas_de_esta_categoria} noticias nuevas para {categoria}.")
                         
-    print(f"Proceso finalizado. Total de noticias nuevas enviadas y guardadas: {enviadas_en_esta_sesion}.")
+    print(f"Proceso finalizado. Total de noticias nuevas enviadas: {enviadas_en_esta_sesion}.")
 
 if __name__ == "__main__":
     asyncio.run(enviar_noticias())
