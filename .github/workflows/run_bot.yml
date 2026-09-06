@@ -3,7 +3,7 @@ name: Bot de Noticias Telegram
 on:
   schedule:
     # Se ejecuta automáticamente cada 5 minutos
-    - cron: '*/5 * * * *'
+   # - cron: '*/5 * * * *'
   workflow_dispatch: # Permite ejecutarlo manualmente cuando quieras
 
 jobs:
@@ -25,3 +25,10 @@ jobs:
 
     - name: Ejecutar Script de Noticias
       run: python noticias.py
+
+    - name: Guardar base de datos y Excel actualizados en GitHub
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Actualización automática de base de datos y registro de noticias"
+        file_pattern: noticias_enviadas.db noticias_registro.xlsx
+        skip_empty_commit: true
