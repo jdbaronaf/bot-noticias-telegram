@@ -17,7 +17,7 @@ TOKEN = "8668968223:AAEBbMlX5M4blE9qU-Ln1IJpTVl5ubTdV8A"
 CHANNEL_ID = "-1004298458383"
 
 # Cantidad exacta de noticias NUEVAS que quieres obtener por categoría en cada ejecución
-NOTICIAS_POR_CATEGORIA = 15
+NOTICIAS_POR_CATEGORIA = 1
 
 def init_db():
     conn = sqlite3.connect("noticias_enviadas.db")
