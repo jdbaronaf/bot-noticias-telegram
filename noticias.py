@@ -13,7 +13,7 @@ import html
 from datetime import datetime
 
 # Configuración de Telegram
-TOKEN = "8668968223:AAEbbM1X5M4b1E9qU-Ln1IJPtV15ubTdV8A"
+TOKEN = "8668968223:AAEBbMlX5M4blE9qU-Ln1IJpTVl5ubTdV8A"
 CHANNEL_ID = "-1004298458383"
 
 # Cantidad exacta de noticias NUEVAS que quieres obtener por categoría en cada ejecución
