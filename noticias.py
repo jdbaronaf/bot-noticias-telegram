@@ -13,7 +13,7 @@ import html
 from datetime import datetime
 
 # Configuración de Telegram
-TOKEN = "8668968223:AAEBbMlX5M4blE9qU-Ln1IJpTVl5ubTdV8A"
+TOKEN = "8668968223:AAEbbM1X5M4b1E9qU-Ln1IJPtV15ubTdV8A"
 CHANNEL_ID = "-1004298458383"
 
 # Cantidad exacta de noticias NUEVAS que quieres obtener por categoría en cada ejecución
@@ -71,11 +71,11 @@ def obtener_noticias_google(query):
             link = entry.get('link', '')
             descripcion = limpiar_texto(entry.get('summary', 'Sin descripción disponible.'))
             
-            # Extraer y formatear la fecha de publicación del RSS si está disponible
+            # Extraer y formatear la fecha con formato AM/PM (ej: 2026-09-05 08:30:15 PM)
             published_parsed = entry.get('published_parsed')
             if published_parsed:
                 dt = datetime(*published_parsed[:6])
-                fecha_formateada = dt.strftime("%Y-%m-%d %H:%M:%S")
+                fecha_formateada = dt.strftime("%Y-%m-%d %I:%M:%S %p")
             else:
                 fecha_formateada = "Fecha no disponible"
             
@@ -95,7 +95,7 @@ async def enviar_noticias():
     bot = Bot(token=TOKEN)
     init_db()
     
-    categorias = ["Tecnología", "Colombia", "Cali", "Deportes", "Economía", "Entretenimiento"]
+    categorias = ["Tecnología", "Colombia", "Cali", "Deportes", "Entretenimiento", "Economía"]
     enviadas_en_esta_sesion = 0
     
     for categoria in categorias:
@@ -111,7 +111,7 @@ async def enviar_noticias():
             if noticia_fue_enviada(noticia["link"]):
                 continue
             
-            # Mensaje incluyendo la fecha y hora de publicación
+            # Mensaje con la fecha y hora en formato AM/PM
             mensaje = (
                 f"📰 <b>{noticia['titulo']}</b>\n\n"
                 f"📂 <b>Categoría:</b> {categoria}\n"
